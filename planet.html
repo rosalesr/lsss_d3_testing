@@ -113,15 +113,11 @@
 
 				orbit: {	// from actual orbital elements	- need to use Travis' code to pull this in automagically
 					a: 1.00000261 * pixel_per_au_scale, // semi-major axis in (AU)
-					//a: 3 * pixel_per_au_scale, // semi-major axis in (AU)
 					e: 0.01671123, // eccentricity
 					b: (1.00000261 * Math.sqrt(1 - Math.pow(0.01671123, 2))) * pixel_per_au_scale,
-					//b: this.a * Math.sqrt(1 - this.e^2) * pixel_per_au_scale,// semi-minor axis (AU)
 					p: 365.256 * seconds_per_day_scale, // orbital period (earth days)
-					//days_per_degree: this.p / 360, //days per degrees;	
 					theta: -11.260, //longitude of ascending node (degrees)	
 					day: ((3.557756175884655E+02) / 360) * 365.256 * seconds_per_day_scale, //start with JPL true-anomaly on 2015-01 
-					//f: Math.sqrt(Math.pow(1.00000261,2) + Math.pow(1.00000261 * Math.sqrt(1 - Math.pow(this.e, 2)),2)),
 				},
 				
 				angle: 0, // start angle 
@@ -220,12 +216,9 @@
 
 				orbit: {	// from actual orbital elements	- need to use Travis' code to pull this in automagically
 					a: 1.5237 * pixel_per_au_scale, // semi-major axis in (AU)
-					//a: 3 * pixel_per_au_scale, // semi-major axis in (AU)
 					e: 0.0935, // eccentricity
 					b: (1.5237 * Math.sqrt(1 - Math.pow(0.0935, 2))) * pixel_per_au_scale,
-					//b: this.a * Math.sqrt(1 - this.e^2) * pixel_per_au_scale,// semi-minor axis (AU)
 					p: 686.971 * seconds_per_day_scale, // orbital period (earth days)
-					//days_per_degree: this.p / 360, //days per degrees;
 					theta: 49.562, //longitude of ascending node (degrees)	
 					day: (1.245907367795300E+01 / 360) * 686.971 * seconds_per_day_scale,
 			
