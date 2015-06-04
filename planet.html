@@ -3,13 +3,13 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>Planet</title>
+		<title>Planet Orbits</title>
 		
 		<script src="http://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
 		
 		<style type="text/css">
-			/* No style rules here yet */
+			/* Add style rules here  */
 
 			html, body {
 				background: rgba(20, 20, 20, 1);
@@ -104,12 +104,6 @@
 			
 				size: 5,
 
-				/*
-				orbit: {		
-					x: width/4,
-					y: height/5
-				},*/
-
 				orbit: {	// from actual orbital elements	- need to use Travis' code to pull this in automagically
 					a: 1.00000261 * pixel_per_au_scale, // semi-major axis in (AU)
 					e: 0.01671123, // eccentricity
@@ -128,9 +122,6 @@
 				shadow: 43
 
 			};
-			
-			//earth.co_ords.x = width/4,
-			//earth.co_ords.y = (height/5) - earth.orbit.b;
 			
 			var earth_orbit = earth_view.append("ellipse")
 								.attr("cx", width/2)
@@ -190,13 +181,6 @@
 							.append("g")
 							.attr("id", "mars-view");	
 			
-			//var mars_ref_line = mars_view.append("line")
-			//						.attr("x1", 0).attr("y1", (height/2))
-			//						.attr("x2", width).attr("y2", (height/2)) // middle of frame
-			//						.style("stroke", "green")
-			//						.style("stroke-width", "0.5px");
-									
-			
 			// add a 'g' element to group mars components
 			mars_view.append("g")
 							.attr("id", "mars-plane");
@@ -206,12 +190,6 @@
 			var mars = {
 			
 				size: 3,
-
-				/*
-				orbit: {		
-					x: width/4,
-					y: height/5
-				},*/
 
 				orbit: {	// from actual orbital elements	- need to use Travis' code to pull this in automagically
 					a: 1.5237 * pixel_per_au_scale, // semi-major axis in (AU)
@@ -232,9 +210,6 @@
 				shadow: 43
 
 			};
-			
-			//mars.co_ords.x = width/4,
-			//mars.co_ords.y = (height/5) - mars.orbit.b;
 			
 			var mars_orbit = mars_view.append("ellipse")
 								.attr("cx", width/2)
@@ -281,12 +256,8 @@
 				mars.el
 					.attr("cx", x)
 					.attr("cy", y)
-					//.attr("transform", "rotate("+mars.angle+", "+x+", "+y+")");
 					.attr("transform", "rotate(" + mars.orbit.theta + ", " + width/2 + ", " + height/2 + ")"); 
-					//.attr("transform", "rotate("+mars.angle+", "+x+", "+y+"), rotate(" + mars.orbit.theta + ", " + width/2 + ", " + height/2 + ")");
-							
-				//mars.angle += 0.050; //set angle for next animation frame
-				
+
 				mars.orbit.day += (seconds_per_frame) % mars.orbit.p;
 				
 				
@@ -311,12 +282,6 @@
 			
 				size: 1,
 
-				/*
-				orbit: {		
-					x: width/4,
-					y: height/5
-				},*/
-
 				orbit: {	// from actual orbital elements	- need to use Travis' code to pull this in automagically
 					a: 1.457960* pixel_per_au_scale, // semi-major axis in (AU)
 					e: 0.222633, // eccentricity
@@ -337,9 +302,6 @@
 				shadow: 43
 
 			};
-			
-			//astr0.co_ords.x = width/4,
-			//astr0.co_ords.y = (height/5) - astr0.orbit.b;
 			
 			var astr0_orbit = astr0_view.append("ellipse")
 								.attr("cx", width/2)
@@ -386,11 +348,7 @@
 				astr0.el
 					.attr("cx", x)
 					.attr("cy", y)
-					//.attr("transform", "rotate("+astr0.angle+", "+x+", "+y+")");
 					.attr("transform", "rotate(" + astr0.orbit.theta + ", " + width/2 + ", " + height/2 + ")"); 
-					//.attr("transform", "rotate("+astr0.angle+", "+x+", "+y+"), rotate(" + astr0.orbit.theta + ", " + width/2 + ", " + height/2 + ")");
-							
-				//astr0.angle += 0.050; //set angle for next animation frame
 				
 				astr0.orbit.day += (seconds_per_frame) % astr0.orbit.p;
 				

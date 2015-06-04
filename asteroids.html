@@ -1,0 +1,493 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Planet</title>
+		<script type="text/javascript" src="d3/d3.v3.min.js"></script>
+		
+		<script src="http://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+		
+		<style type="text/css">
+			/* No style rules here yet */
+
+			html, body {
+				background: rgba(20, 20, 20, 1);
+				color: white;
+				font-size: 18px;
+				line-height: 27px;
+				font-family: sans-serif, times;
+			}
+			
+			#system-view {
+				position: absolute; 
+				left: 0px; 
+				width: 1000px; 
+				height: 800px; 
+				border: 1px solid grey;
+				background: black;
+			}
+			
+			.legend {
+				fill: rgba(255, 255, 255, 1);
+				stroke: rgba(255, 255, 255, 1);
+				
+			}
+
+			
+		</style>
+		
+	</head>
+	<body>
+	
+	
+		<h1 class="heading text-center">LS3 3Q20xx Investor Prospectus Excerpt: </h1>
+		<h2 class="heading text-center">Prospect Asteroid Orbits Fig. 1</h2>
+		<svg id="system-view">
+		
+			<text x="20" y="40" class="legend">Note: Inclination projected along invariable plane.</text>
+
+		</svg>	
+	
+		<script type="text/javascript">
+			
+			
+									
+			var width  = 1000;
+			var height = 800;
+	
+			var pixel_per_au_scale = 200;
+			var seconds_per_day_scale = 0.1;
+			var seconds_per_frame = 0.030;
+			var ms_per_frame = seconds_per_frame * 1000;	
+			
+			var asteroid_view = [];
+			var asteroid = [];
+			var asteroid_orbit = [];
+			//---------------------------------------------
+			// Go pull data from the really nice asteroid 
+			// database that Planetary Resources uses!
+			//---------------------------------------------	
+
+
+			var asteroid_data =  $.getJSON('http://www.asterank.com/api/asterank?query={%22e%22:{%22$lt%22:0.1},%22i%22:{%22$lt%22:4},%22a%22:{%22$lt%22:1.6,%22$gt%22:1.2}}&limit=10', function(data){
+                
+		
+				//---------------------------------------------
+				// sun - just a circle in the middle for now
+				//---------------------------------------------
+				
+				var sun_view = d3.select("#system-view")
+								.append("g")
+								.attr("id", "sun-view");	
+				
+				var sun = sun_view.append("circle")
+					.attr("id", "bottom-sun")
+					.attr("class", "bottom sun")
+					.attr("cx", width/2)
+					.attr("cy", (height/2))
+					.attr("r", 20)
+					.style("fill", "rgba(255, 255, 255, 1)")
+					.style("fill-opacity", 1);
+		
+		
+				//---------------------------------------------
+				// earth - 
+				//---------------------------------------------
+				var earth_view = d3.select("#system-view")
+								.append("g")
+								.attr("id", "mars-view");	
+				
+				// add a 'g' element to group earth components
+				earth_view.append("g")
+								.attr("id", "earth-plane");
+						
+				
+					
+				var earth = {
+				
+					size: 5,
+
+					/*
+					orbit: {		
+						x: width/4,
+						y: height/5
+					},*/
+
+					orbit: {	// from actual orbital elements	- need to use Travis' code to pull this in automagically
+						a: 1.00000261 * pixel_per_au_scale, // semi-major axis in (AU)
+						//a: 3 * pixel_per_au_scale, // semi-major axis in (AU)
+						e: 0.01671123, // eccentricity
+						b: (1.00000261 * Math.sqrt(1 - Math.pow(0.01671123, 2))) * pixel_per_au_scale,
+						//b: this.a * Math.sqrt(1 - this.e^2) * pixel_per_au_scale,// semi-minor axis (AU)
+						p: 365.256 * seconds_per_day_scale, // orbital period (earth days)
+						//days_per_degree: this.p / 360, //days per degrees;	
+						theta: -11.260, //longitude of ascending node (degrees)	
+						day: ((3.557756175884655E+02) / 360) * 365.256 * seconds_per_day_scale, //start with JPL true-anomaly on 2015-01 
+						//f: Math.sqrt(Math.pow(1.00000261,2) + Math.pow(1.00000261 * Math.sqrt(1 - Math.pow(this.e, 2)),2)),
+					},
+					
+					angle: 0, // start angle 
+					
+					co_ords: {},
+
+					el: '',
+
+					shadow: 43
+
+				};
+				
+				//earth.co_ords.x = width/4,
+				//earth.co_ords.y = (height/5) - earth.orbit.b;
+				
+				var earth_orbit = earth_view.append("ellipse")
+									.attr("cx", width/2)
+									.attr("cy", (height/2))
+									.attr("rx", earth.orbit.a) 
+									.attr("ry", earth.orbit.b)
+									.attr("transform", "rotate(" + earth.orbit.theta + ", " + width/2 + ", " + height/2 + ")") 
+									.style("fill", "none")
+									.style("stroke", "rgba(" + 100 + "," + 100 + "," + 255 + "," + 1 + ")")
+									.style("stroke-dasharray", "2, 10"); 								
+											
+				earth.el = earth_view.select("#earth-plane")
+						.append("circle")
+						.attr("id", "earth")
+						.attr("class", "earth")
+						.attr("cx", earth.co_ords.x)
+						.attr("cy", earth.co_ords.y)
+						.attr("r", earth.size)
+						.attr("transform", "rotate(" + earth.orbit.theta + ", " + width/2 + ", " + height/2 + ")") 
+						.style("fill", "blue");						
+		
+				
+
+				
+				function orbitEarth () {
+				
+					var angle = (earth.orbit.day/earth.orbit.p) * 360;
+					var radian = (angle/360)*(2*Math.PI);
+
+					// redefine height for the bottom view part
+					var b_height = (height/2);
+
+					// the basic ellipse co-ordinates is given by x*cos(t), y*sin(t) where x, y are ellipse x and y radii
+
+					// co-ordinates to move the earth around its orbit
+					var x = (width/2) + earth.orbit.a * Math.cos(radian);
+					var y = b_height - earth.orbit.b * Math.sin(radian);
+
+					// rotate earth
+					
+					earth.el
+						.attr("cx", x)
+						.attr("cy", y)
+						.attr("transform", "rotate(" + earth.orbit.theta + ", " + width/2 + ", " + height/2 + ")"); 
+
+					earth.orbit.day += (seconds_per_frame) % earth.orbit.p;
+					
+					
+				};
+				
+		
+		
+				//---------------------------------------------
+				// mars - 
+				//---------------------------------------------
+				var mars_view = d3.select("#system-view")
+								.append("g")
+								.attr("id", "mars-view");								
+				
+				// add a 'g' element to group mars components
+				mars_view.append("g")
+								.attr("id", "mars-plane");
+						
+				
+					
+				var mars = {
+				
+					size: 3,
+
+					/*
+					orbit: {		
+						x: width/4,
+						y: height/5
+					},*/
+
+					orbit: {	// from actual orbital elements	- need to use Travis' code to pull this in automagically
+						a: 1.5237 * pixel_per_au_scale, // semi-major axis in (AU)
+						//a: 3 * pixel_per_au_scale, // semi-major axis in (AU)
+						e: 0.0935, // eccentricity
+						b: (1.5237 * Math.sqrt(1 - Math.pow(0.0935, 2))) * pixel_per_au_scale,
+						//b: this.a * Math.sqrt(1 - this.e^2) * pixel_per_au_scale,// semi-minor axis (AU)
+						p: 686.971 * seconds_per_day_scale, // orbital period (earth days)
+						//days_per_degree: this.p / 360, //days per degrees;
+						theta: 49.562, //longitude of ascending node (degrees)	
+						day: (1.245907367795300E+01 / 360) * 686.971 * seconds_per_day_scale, //start with JPL true-anomaly on 2015-01 
+				
+					},
+					
+					angle: 0, // start angle 
+					
+					co_ords: {},
+
+					el: '',
+
+					shadow: 43
+
+				};
+				
+				//mars.co_ords.x = width/4,
+				//mars.co_ords.y = (height/5) - mars.orbit.b;
+				
+				var mars_orbit = mars_view.append("ellipse")
+									.attr("cx", width/2)
+									.attr("cy", (height/2))
+									.attr("rx", mars.orbit.a) 
+									.attr("ry", mars.orbit.b)
+									//.attr("transform", "rotate(" + mars.orbit.theta + ", 0, 0)") 
+									.attr("transform", "rotate(" + mars.orbit.theta + ", " + width/2 + ", " + height/2 + ")") 
+									.style("fill", "none")
+									.style("stroke", "rgba(" + 255 + "," + 100 + "," + 100 + "," + 1 + ")")
+									//.style("stroke", "red")
+									.style("stroke-dasharray", "2, 10"); 								
+											
+				mars.el = mars_view.select("#mars-plane")
+						.append("circle")
+						.attr("id", "mars")
+						.attr("class", "mars")
+						.attr("cx", mars.co_ords.x)
+						.attr("cy", mars.co_ords.y)
+						.attr("r", mars.size)
+						.attr("transform", "rotate(" + mars.orbit.theta + ", " + width/2 + ", " + height/2 + ")") 
+						.style("fill", "red");						
+		
+				
+				var mars_ref_line = mars_view.append("line") //plot along mars longitude of ascending node
+										.attr("x1", 0).attr("y1", (height/2))
+										.attr("x2", width).attr("y2", (height/2)) // middle of frame
+										.style("stroke", "rgba(255, 255, 50, 1)")
+										.style("stroke-width", "0.5px");
+				
+				function orbitMars () {
+				
+					var angle = (mars.orbit.day/mars.orbit.p) * 360;
+					var radian = (angle/360)*(2*Math.PI);
+
+					// redefine height for the bottom view part
+					var b_height = (height/2);
+
+					// the basic ellipse co-ordinates is given by x*cos(t), y*sin(t) where x, y are ellipse x and y radii
+
+					// co-ordinates to move the earth around its orbit
+					var x = (width/2) + mars.orbit.a * Math.cos(radian);
+					var y = b_height - mars.orbit.b * Math.sin(radian);
+
+					// rotate mars
+					
+					mars.el
+						.attr("cx", x)
+						.attr("cy", y)
+						//.attr("transform", "rotate("+mars.angle+", "+x+", "+y+")");
+						.attr("transform", "rotate(" + mars.orbit.theta + ", " + width/2 + ", " + height/2 + ")"); 
+						//.attr("transform", "rotate("+mars.angle+", "+x+", "+y+"), rotate(" + mars.orbit.theta + ", " + width/2 + ", " + height/2 + ")");
+								
+					//mars.angle += 0.050; //set angle for next animation frame
+					
+					mars.orbit.day += (seconds_per_frame) % mars.orbit.p;
+					
+					
+				};
+				
+				
+
+				
+				
+				
+				
+				//---------------------------------------------
+				// asteroid database array display setup 
+				//---------------------------------------------
+
+				// output tracking header saying how many objects are being tracked
+				sun_view.append("text")
+							.attr("x", 75)
+							.attr("y", 100)
+							.attr("font-size", "11px")
+							.attr("fill", "white")
+							.text(function(d){
+									return ("Currently tracking "+ data.length + " objects:");
+								}	
+							);
+				
+				for(i = 0; i < data.length; ++i){
+				
+					// output name of each asteroid as we iterate through them	
+					sun_view.append("text")
+							.attr("x", 100)
+							.attr("y", 100 + (i+1)*20)
+							.attr("font-size", "11px")
+							.attr("fill", "white")
+							.text(function(d){
+									return ("asteroid[" + i + "] = " + data[i].full_name + "ID: " + data[i].id);
+								}	
+							);
+							
+					
+					//---------------------------------------------
+					// asteroid[n] - 
+					//---------------------------------------------
+					asteroid_view[i] = d3.select("#system-view")
+									.append("g")
+									.attr("id", data[i].id + "-view");	
+					
+					
+					// add a 'g' element to group astr0 components
+					asteroid_view[i].append("g")
+									.attr("id", data[i].id + "-plane");
+							
+					
+						
+					asteroid[i] = {
+					
+						size: 2,
+
+						/*
+						orbit: {		
+							x: width/4,
+							y: height/5
+						},*/
+
+						orbit: {	// from actual orbital elements	- need to use Travis' code to pull this in automagically
+							a: data[i].a * pixel_per_au_scale, // semi-major axis in (AU)
+							e: data[i].e, // eccentricity
+							b: (data[i].a * Math.sqrt(1 - Math.pow(data[i].e, 2))) * pixel_per_au_scale,
+							p: data[i].per * seconds_per_day_scale, // orbital period (earth days)
+							theta: Math.random() * 360, //longitude of ascending node (degrees)	BOGUS
+							day: Math.random() * data[i].per * seconds_per_day_scale, //start with BOGUS true-anomaly (degrees) on 2015-01 
+							
+							
+						},
+						
+						angle: 0, // start angle 
+						
+						co_ords: {},
+
+						el: '',
+
+						shadow: 43
+
+					};
+					
+					asteroid_orbit[i] = asteroid_view[i].append("ellipse")
+										.attr("cx", width/2)
+										.attr("cy", (height/2))
+										.attr("rx", asteroid[i].orbit.a) 
+										.attr("ry", asteroid[i].orbit.b)
+										.attr("transform", "rotate(" + asteroid[i].orbit.theta + ", " + width/2 + ", " + height/2 + ")") 
+										.style("fill", "none")
+										.style("stroke", "rgba(" + 50 + "," + 50 + "," + 50 + "," + 1 + ")")
+										.style("stroke-dasharray", "1, 10"); 								
+												
+					asteroid[i].el = asteroid_view[i].select("#" + data[i].id + "-plane")
+							.append("circle")
+							.attr("id", data[i].id)
+							.attr("class", data[i].id)
+							.attr("cx", asteroid[i].co_ords.x)
+							.attr("cy", asteroid[i].co_ords.y)
+							.attr("r", asteroid[i].size)
+							.attr("transform", "rotate(" + asteroid[i].orbit.theta + ", " + width/2 + ", " + height/2 + ")") 
+							.style("fill", "white");						
+			
+					
+		
+									
+
+
+					
+							
+					
+					
+				}
+				
+
+				// increments all coordintes for dynamically created asteroid objects
+				function orbitasteroid () {
+				
+					var angle;
+					var radian;
+
+					// redefine height for the bottom view part
+					var b_height;
+					
+					// co-ordinates to move the earth around its orbit
+					var x;
+					var y;	
+
+	
+					for(var i = 0; i < asteroid.length; ++i){ //iterate through all of the above objects if they exist yet...			
+
+						angle = (asteroid[i].orbit.day/asteroid[i].orbit.p) * 360;
+						radian = (angle/360)*(2*Math.PI);
+
+						// redefine height for the bottom view part
+						b_height = (height/2);
+
+						// the basic ellipse co-ordinates is given by x*cos(t), y*sin(t) where x, y are ellipse x and y radii
+
+						// co-ordinates to move the earth around its orbit
+						x = (width/2) + asteroid[i].orbit.a * Math.cos(radian);
+						y = b_height - asteroid[i].orbit.b * Math.sin(radian);
+
+						// rotate astr0
+						
+						asteroid[i].el
+							.attr("cx", x)
+							.attr("cy", y)
+							.attr("transform", "rotate(" + asteroid[i].orbit.theta + ", " + width/2 + ", " + height/2 + ")"); 
+						
+						asteroid[i].orbit.day = (asteroid[i].orbit.day + seconds_per_frame) % asteroid[i].orbit.p;
+					
+						//if(i == 0){
+						//	console.log(asteroid[i].orbit.day);
+						//}
+					}
+					
+				};	
+			
+				function animate_all (){
+					orbitEarth();
+					orbitMars();	
+					
+					orbitasteroid();
+								
+				};
+
+			
+				setInterval(animate_all, ms_per_frame);
+				
+				
+				
+				
+							
+            });
+			
+			
+			
+			
+			
+
+			
+			
+		</script>
+				
+
+
+		
+		
+		
+		
+		
+	</body>
+</html>
